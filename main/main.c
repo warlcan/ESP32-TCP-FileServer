@@ -18,7 +18,8 @@
 
 #define PORT 12035
 #define PACKET_SIZE 32
-#define BUFFER_SD_SIZE 8192
+// #define BUFFER_SD_SIZE 8192
+#define BUFFER_SD_SIZE 4096
 
 #define STATUS_DOWNLOAD false
 #define STATUS_UPLOAD true
@@ -85,6 +86,7 @@ static int calculate_upload_progress(size_t file_size, size_t counter){
 
 static void upload_file(int main_sock, FILE *file){
     char buffer[PACKET_SIZE];
+    char file_buffer[BUFFER_SD_SIZE];
     size_t file_size = find_file_size(file);
     show_file_size(file_size);
     max_packets = file_size / PACKET_SIZE;
@@ -93,15 +95,19 @@ static void upload_file(int main_sock, FILE *file){
 
     size_t counter = 0;
     while (1) {
-        int bytes_read = fread(buffer, 1, PACKET_SIZE, file);
+        int bytes_read = fread(file_buffer, 1, BUFFER_SD_SIZE, file);
         if (bytes_read <= 0) break;
         
-        send(main_sock, buffer, bytes_read, 0);
-        if ((counter % 100) == 0) {
-            int progress = calculate_upload_progress(file_size, counter);
-            show_progress_status(progress);
+        for (int offset = 0; offset < BUFFER_SD_SIZE; offset+=32){
+            memset(buffer, 0, sizeof(buffer));
+            memcpy(buffer, file_buffer + offset, PACKET_SIZE);
+            send(main_sock, buffer, PACKET_SIZE, 0);
+            if ((counter % 100) == 0) {
+                int progress = calculate_upload_progress(file_size, counter);
+                show_progress_status(progress);
+            }
+            counter++;
         }
-        counter++;
     }
     show_progress_status(100);
 }
