@@ -1,7 +1,7 @@
 #include "include/sd_card.h"
 #include "include/wifi.h"
 #include "include/display.h"
-
+#include <math.h>
 #include <sys/socket.h>
 
 #include "esp_timer.h"
@@ -11,104 +11,151 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
-#include "ssd1306.h"
+#define UPLOAD_PACKET_TYPE 0xEE
+#define DOWNLOAD_PACKET_TYPE 0xAA
+#define DATA_PACKET_TYPE 0xDD
+#define FIN_PACKET_TYPE 0xFF
 
 #define PORT 12035
 #define PACKET_SIZE 32
 #define BUFFER_SD_SIZE 8192
 
+#define STATUS_DOWNLOAD false
+#define STATUS_UPLOAD true
+
 static const char mount_point[] = "/sdcard";
-static const char *TAG = "SD_CARD";
-static bool is_FIN = false;
+static const char *TAG = "MAIN";
+
+static bool status_loading;
 static char file_name[16] = {0};
-static unsigned int max_packets = 0;
+static uint32_t max_packets = 0;
 
-FILE *file;
 
-static bool mount_sd(){
-    esp_err_t ret = sd_card_controller(true, mount_point);
-    if (ret == ESP_OK) {
-        ESP_LOGI(TAG, "Mount: OK");
-        send_display_command(1, 2, "MNT: Y");
-        return true;
-    } else {
-        ESP_LOGE(TAG, "Mount failed: 0x%x", ret);
-        send_display_command(1, 2, "MNT: ERROR");
-        return false;
-    }
+static int calculate_load_progress(size_t counter){
+    int progress = round((counter * 100) / max_packets);
+    return progress;
+}
+static size_t calculate_file_size(){
+    return max_packets * (PACKET_SIZE - 1);
 }
 
-static bool umount_sd(){
-    esp_err_t ret = sd_card_controller(false, mount_point);
-    if (ret == ESP_OK) {
-        ESP_LOGI(TAG, "Umount: OK");
-        send_display_command(1, 2, "MNT: N");
-        return true;
-    } else {
-        ESP_LOGE(TAG, "Umount failed: 0x%x", ret);
-        send_display_command(1, 2, "MNT: ERROR");
-        return false;
-    }
-}
+static void download_file(int main_sock, FILE *file){
+    size_t counter = 0;
+    uint8_t last_load_progress = 255;
+    char buffer[PACKET_SIZE];
+    size_t file_size = calculate_file_size();
+    show_file_size(file_size);
+    show_progress_status(0);
+    show_file_name(file_name);
 
+    while(1) {
+        uint8_t received_l = recv(main_sock, buffer, PACKET_SIZE, 0); // if PACKET_SIZE > 255: uint8_t >> uint16_t or more
+        if (received_l <= 0) break;
 
-static void packet_service_type(char *buffer){
-    memcpy(file_name, buffer + 1, sizeof(file_name));
-    memcpy(&max_packets, buffer + 1 + sizeof(file_name), sizeof(max_packets));
-}
-
-static void packet_data_type(char *buffer){
-    fwrite(buffer + 1, sizeof(char), PACKET_SIZE - 1, file);
-}
-
-static void packet_fin_type(){
-    is_FIN = true;
-}
-
-static void parsing_packet(char *buffer){
-        switch (buffer[0]){
-        case 0xAA: // file name
-            packet_service_type(buffer);
-            break;
-        case 0xDD: // data
-            packet_data_type(buffer);
-            break;
-        case 0xFF: // fin flag
-            packet_fin_type();
-            break;
-        default:
-            ESP_LOGE(TAG, "INCORRECT TYPE BYTE: CHECK CLIENT");
-            break;
+        if ((counter % 100) == 0) {
+            uint8_t load_progress = calculate_load_progress(counter);
+            if (last_load_progress != load_progress) {    
+                show_progress_status(load_progress);
+                last_load_progress = load_progress;
+            }
         }
+
+        if (buffer[0] == DATA_PACKET_TYPE) {
+            fwrite(buffer + 1, sizeof(char), PACKET_SIZE - 1, file);
+        } else {
+            ESP_LOGE(TAG, "Error: Bad data flag: %d", buffer[0]);
+        }
+
+        counter++;
+    }
+    show_progress_status(100);
+}
+
+static size_t find_file_size(FILE* file){
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    return file_size;
+}
+
+static int calculate_upload_progress(size_t file_size, size_t counter){
+    int progress = (counter * 100) / max_packets;
+    return progress;
+}
+
+static void upload_file(int main_sock, FILE *file){
+    char buffer[PACKET_SIZE];
+    size_t file_size = find_file_size(file);
+    show_file_size(file_size);
+    max_packets = file_size / PACKET_SIZE;
+    show_progress_status(0);
+    show_file_name(file_name);
+
+    size_t counter = 0;
+    while (1) {
+        int bytes_read = fread(buffer, 1, PACKET_SIZE, file);
+        if (bytes_read <= 0) break;
+        
+        send(main_sock, buffer, bytes_read, 0);
+        if ((counter % 100) == 0) {
+            int progress = calculate_upload_progress(file_size, counter);
+            show_progress_status(progress);
+        }
+        counter++;
+    }
+    show_progress_status(100);
 }
 
 
-static void open_file(){
-        char path[256] = {0};
-        strcat(path, mount_point);
-        strcat(path, "/");
-        strcat(path, file_name);
-
-        file = fopen(path, "wb");
-        setvbuf(file, NULL, _IOFBF, BUFFER_SD_SIZE);
+static void packet_upload_request(char *buffer){
+    memcpy(file_name, buffer + 1, sizeof(file_name));
+    ESP_LOGI(TAG, "%s", file_name);
+    status_loading = STATUS_UPLOAD;
 }
 
-static int last_percent = -1;
-static void percent_display_show(unsigned int counter) {
-    int percent = (counter * 100) / max_packets;
-    if (percent != last_percent){
-        char temp[16];
-        snprintf(temp, 16, "LOAD: %d%%", percent);
-        send_display_command(1, 6, temp);
-        last_percent = percent;
+static void packet_download_request(char *buffer){
+    memcpy(&max_packets, buffer + 1, sizeof(max_packets));
+    memcpy(file_name, buffer + 1 + sizeof(max_packets), sizeof(file_name));
+    status_loading = STATUS_DOWNLOAD;
+}
+
+static void parsing_service_packet(char *buffer){
+    switch (buffer[0]) {
+    case DOWNLOAD_PACKET_TYPE:
+        packet_download_request(buffer);
+        break;
+    case UPLOAD_PACKET_TYPE:
+        packet_upload_request(buffer);
+        break;
+    default:
+        ESP_LOGE(TAG, "Error: Bad flag in service packet");
+        break;
     }
 }
 
-static void filesize_display_show(){
-    char temp_s[16];
-    double file_size = (double)max_packets / 32;
-    snprintf(temp_s, 16, "FILE: %.2f", file_size);
-    send_display_command(1, 5, temp_s);
+static FILE* open_file(char *open_type){
+    char path[256] = {0};
+    strcat(path, mount_point);
+    strcat(path, "/");
+    strcat(path, file_name);
+
+    FILE* file = fopen(path, open_type);
+    if (file == NULL){
+        ESP_LOGE(TAG, "Error: File \"%s\" not found", path);
+        return NULL;
+    }
+
+    ESP_LOGI(TAG, "File open: %s", path);
+    setvbuf(file, NULL, _IOFBF, BUFFER_SD_SIZE);
+    return file;
+}
+
+static void end_connect(int *main_sock){
+    ESP_LOGI(TAG, "Close connect");
+    umount_sd();
+    show_mnt_status(2);
+    close(*main_sock);
+    show_cnt_status(2);
 }
 
 static void server_controller_task(void *pvParameters){
@@ -125,52 +172,51 @@ static void server_controller_task(void *pvParameters){
     listen(listen_sock, 1);
 
     while (1) {
-        char recv_buffer[PACKET_SIZE] = {0};
-        unsigned int counter = 0;
+        FILE *file = NULL;
+        char buffer[PACKET_SIZE];
 
-        // accept connection
-        int client_sock = accept(listen_sock, (struct sockaddr *)&client_addr, &addr_len);
-        send_display_clear();
-        draw_intro();
+        int main_sock = accept(listen_sock, (struct sockaddr *)&client_addr, &addr_len);
         ESP_LOGI(TAG, "Accept connect");
-        send_display_command(1, 3, "CNT: Y");
-        // mount sd
-        if(!mount_sd()){
+        sd_card_init(mount_point);
+        send_display_clear();
+        show_intro();
+        show_cnt_status(1);
+        if (mount_sd()) {
+            show_mnt_status(3);
+            close(main_sock);
             continue;
         }
-        // receive first(service) packet
-        recv(client_sock, recv_buffer, sizeof(recv_buffer), 0);
-        parsing_packet(recv_buffer);
+        show_mnt_status(1);
 
-        // open file
-        open_file();
-        filesize_display_show();
-        send_display_command(1, 7, file_name);
-        
-        while (1) {
-            int received_len = recv(client_sock, recv_buffer, sizeof(recv_buffer), 0);
-            if (received_len <= 0) break;
+        recv(main_sock, buffer, sizeof(buffer), 0);
+        parsing_service_packet(buffer);
 
-            percent_display_show(counter);
-
-            parsing_packet(recv_buffer);
-            if(is_FIN){
-                ESP_LOGI(TAG, "Fin packet");
-                break;
+        if (status_loading == STATUS_UPLOAD){
+            ESP_LOGI(TAG, "Upload");
+            file = open_file("rb");
+            if (file == NULL) {
+                end_connect(&main_sock);
+                continue;
             }
-            counter++;
+            upload_file(main_sock, file);
+        } else {
+            ESP_LOGI(TAG, "Download");
+            file = open_file("wb");
+            if (file == NULL) {
+                end_connect(&main_sock);
+                continue;
+            }
+            download_file(main_sock, file);
         }
-        is_FIN = false;
+
         fclose(file);
-        umount_sd();
-        close(client_sock);
-        send_display_command(1, 3, "CNT: N");
+        end_connect(&main_sock);
     }
 }
 
 void app_main(void) {
     display_init();
-    draw_intro();
+    show_intro();
 
     nvs_flash_init();
     wifi_init();
