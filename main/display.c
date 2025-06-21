@@ -49,11 +49,10 @@ void send_display_command(int cmd, int y, char *data){
     xQueueSend(display_queue, &display_command, portMAX_DELAY);
 }
 
-void send_display_clear(void){
-    ssd1306_clear_screen(&dev, false);
-}
-
-void show_intro(void){
+void show_intro(bool is_clear_screen){
+    if(is_clear_screen){
+        ssd1306_clear_screen(&dev, false);
+    }
     uint8_t circle[] = {
         0b11100111,
         0b10000001,

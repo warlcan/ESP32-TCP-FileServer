@@ -1,8 +1,5 @@
 #include "include/wifi.h"
 
-#define WIFI_SSID "MODEM"
-#define WIFI_PASS "7341793hi"
-
 // reconnect
 static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
     if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED){

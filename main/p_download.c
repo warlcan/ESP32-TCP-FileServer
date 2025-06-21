@@ -1,0 +1,47 @@
+#include "include/p_download.h"
+#include "include/display.h"
+
+static const char *TAG = "P_Download";
+
+static FILE* open_file(char* file_name){
+    char path[256] = {0};
+    strcat(path, MOUNT_POINT);
+    strcat(path, "/");
+    strcat(path, file_name);
+
+    FILE* file = fopen(path, "wb");
+    if (file == NULL){
+        ESP_LOGE(TAG, "Error: File \"%s\" not found", path);
+        return NULL;
+    }
+    ESP_LOGI(TAG, "File open: %s", path);
+    setvbuf(file, NULL, _IOFBF, BUFFER_DOWNLOAD_FILE_SIZE);
+    return file;
+}
+
+void start_download(int main_sock, char* file_name, uint32_t file_size){
+    FILE* file = open_file(file_name);
+    char buffer[CHUNK_SIZE];
+    size_t counter = 0;
+    size_t max_packets = file_size / CHUNK_SIZE;
+    show_file_size(file_size);
+    show_file_name(file_name);
+    show_progress_status(0);
+
+    while(1){
+        uint8_t received_len = recv(main_sock, buffer, CHUNK_SIZE, 0);
+        if (received_len <= 0) break;
+
+        if (counter % 500 == 0){
+            uint8_t load_progess = (counter * 100) / max_packets;
+            show_progress_status(load_progess);
+        }
+
+        if (buffer[0] == DATA_PACKET_TYPE) {
+            fwrite(buffer + 1, sizeof(char), CHUNK_SIZE - 1, file);
+        } else ESP_LOGE(TAG, "Error: Bad data flag: %d", buffer[0]);
+
+        counter++;
+    }
+    show_progress_status(100);
+}

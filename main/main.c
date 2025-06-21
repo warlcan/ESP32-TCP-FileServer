@@ -184,8 +184,7 @@ static void server_controller_task(void *pvParameters){
         int main_sock = accept(listen_sock, (struct sockaddr *)&client_addr, &addr_len);
         ESP_LOGI(TAG, "Accept connect");
         sd_card_init(mount_point);
-        send_display_clear();
-        show_intro();
+        show_intro(1);
         show_cnt_status(1);
         if (mount_sd()) {
             show_mnt_status(3);
@@ -222,7 +221,7 @@ static void server_controller_task(void *pvParameters){
 
 void app_main(void) {
     display_init();
-    show_intro();
+    show_intro(1);
 
     nvs_flash_init();
     wifi_init();

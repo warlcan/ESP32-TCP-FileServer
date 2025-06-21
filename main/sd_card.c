@@ -1,10 +1,5 @@
 #include "include/sd_card.h"
 
-#define PIN_SPI_MISO 19
-#define PIN_SPI_MOSI 23
-#define PIN_SPI_CLK 18
-#define PIN_SPI_CS 5
-
 static sdmmc_card_t *card = NULL;
 static sdmmc_host_t host = SDSPI_HOST_DEFAULT();
 static sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
