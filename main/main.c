@@ -122,5 +122,7 @@ void app_main(void){
     nvs_flash_init();
     wifi_init();
 
+    sd_card_init(MOUNT_POINT);
+
     xTaskCreate(server_controller_task, "ServerController", 8192, NULL, 8, NULL);
 }
