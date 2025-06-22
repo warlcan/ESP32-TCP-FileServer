@@ -105,6 +105,13 @@ static void server_controller_task(void *pvParameters){
             ESP_LOGE(TAG, "Error: Bad flag in service packet");
             break;
         }
+
+        // end
+        close(main_sock);
+        ESP_LOGI(TAG, "Connect close");
+        show_cnt_status(2);
+        umount_sd();
+        show_mnt_status(2);
     }
 }
 
