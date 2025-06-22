@@ -1,8 +1,12 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define PORT 12035
+// general
 #define CHUNK_SIZE 32
+#define CALCULATING_PROGRESS_INTERVAL 500
+
+// server controller (main)
+#define PORT 12035
 #define FILE_NAME_BUFFER_SIZE 20
 
 #define DOWNLOAD_PACKET_TYPE 0x01
@@ -10,11 +14,12 @@
 #define DATA_PACKET_TYPE 0xDD
 
 #define MOUNT_POINT "/sdcard"
-
 // p_download
 #define BUFFER_DOWNLOAD_FILE_SIZE 8192
 
 // p_upload
+#define BUFFER_UPLOAD_FILE_SIZE 8192
+
 
 // display.h
 #define DISPLAY_QUEUE_SIZE 10

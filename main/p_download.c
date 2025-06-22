@@ -19,20 +19,23 @@ static FILE* open_file(char* file_name){
     return file;
 }
 
-void start_download(int main_sock, char* file_name, uint32_t file_size){
+void start_download(int main_sock, char *file_name, uint32_t file_size){
     FILE* file = open_file(file_name);
-    char buffer[CHUNK_SIZE];
+    if (file == NULL) return;
     size_t counter = 0;
     size_t max_packets = file_size / CHUNK_SIZE;
+
     show_file_size(file_size);
     show_file_name(file_name);
     show_progress_status(0);
 
     while(1){
+        char buffer[CHUNK_SIZE] = {0}; // resetting at each iteration
+
         uint8_t received_len = recv(main_sock, buffer, CHUNK_SIZE, 0);
         if (received_len <= 0) break;
 
-        if (counter % 500 == 0){
+        if (counter % CALCULATING_PROGRESS_INTERVAL == 0){
             uint8_t load_progess = (counter * 100) / max_packets;
             show_progress_status(load_progess);
         }
@@ -43,5 +46,6 @@ void start_download(int main_sock, char* file_name, uint32_t file_size){
 
         counter++;
     }
+    fclose(file);
     show_progress_status(100);
 }
