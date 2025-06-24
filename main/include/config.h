@@ -46,7 +46,7 @@
 #define PIN_SPI_CS 5
 
 // wfi.h
-#define WIFI_SSID "MODEM"
-#define WIFI_PASS "7341793hi"
+#define WIFI_SSID "WIFI SSID"
+#define WIFI_PASS "WIFI PASSWORD"
 
 #endif
