@@ -24,6 +24,7 @@
 // display.h
 #define DISPLAY_QUEUE_SIZE 10
 
+#define ESP_IP_STATUS_STR 1
 #define CNT_STATUS_STR 2
 #define MNT_STATUS_STR 3
 #define LOADING_STATUS_STR 4

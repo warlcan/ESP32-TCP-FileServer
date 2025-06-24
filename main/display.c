@@ -62,16 +62,30 @@ void show_intro(bool is_clear_screen){
     ssd1306_bitmaps(&dev, 0, 0, circle, 8, 8, true);
     show_mnt_status(-1);
     show_cnt_status(-1);
+    show_status_load(STATUS_VOID);
     show_file_size(0);
     show_progress_status(0);
     show_file_name("-");
 }
 
+void show_esp_ip(char *esp_ip){
+    send_display_command(1, ESP_IP_STATUS_STR, esp_ip);
+}
+
 void show_status_load(StatusLoading status_loading){
-    if (status_loading == STATUS_UPLOAD){
-        send_display_command(1, LOADING_STATUS_STR, "SRVR -> CLNT");
-    } else {
+    switch (status_loading)
+    {
+    case STATUS_UPLOAD:
         send_display_command(1, LOADING_STATUS_STR, "SRVR <- CLNT");
+        break;
+    case STATUS_DOWNLOAD:
+        send_display_command(1, LOADING_STATUS_STR, "SRVR -> CLNT");
+        break;
+    case STATUS_VOID:
+        send_display_command(1, LOADING_STATUS_STR, "SRVR    CLNT");
+        break;
+    default:
+        break;
     }
 }
 

@@ -140,12 +140,12 @@ static void server_controller_task(void *pvParameters){
 
 void app_main(void){
     display_init();
-    show_intro(1);
 
     nvs_flash_init();
     wifi_init();
 
     sd_card_init(MOUNT_POINT);
+    show_intro(1);
 
     xTaskCreate(server_controller_task, "ServerController", 8192, NULL, 8, NULL);
 }

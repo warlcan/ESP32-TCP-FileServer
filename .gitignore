@@ -6,4 +6,3 @@ dependencies.lock
 .cache/
 .vscode/
 trash/
-scripts/
