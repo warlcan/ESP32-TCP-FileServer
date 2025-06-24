@@ -19,8 +19,8 @@ typedef struct {
 } DisplayCommand;
 
 typedef enum {
-    STATUS_DOWNLOAD = 0,
-    STATUS_UPLOAD = 1
+    STATUS_UPLOAD = 0,
+    STATUS_DOWNLOAD = 1
 } StatusLoading;
 
 enum {

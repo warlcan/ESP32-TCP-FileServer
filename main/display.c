@@ -68,7 +68,7 @@ void show_intro(bool is_clear_screen){
 }
 
 void show_status_load(StatusLoading status_loading){
-    if (status_loading == STATUS_DOWNLOAD){
+    if (status_loading == STATUS_UPLOAD){
         send_display_command(1, LOADING_STATUS_STR, "SRVR -> CLNT");
     } else {
         send_display_command(1, LOADING_STATUS_STR, "SRVR <- CLNT");

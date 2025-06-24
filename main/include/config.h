@@ -10,16 +10,16 @@
 // FAT limit (8 bytes for the name, 1 byte for the dot, 
 // and 3 bytes for the file extension) 
 #define FILE_NAME_BUFFER_SIZE 8 + 1 + 3
-#define DOWNLOAD_PACKET_TYPE 0x01
-#define UPLOAD_PACKET_TYPE 0x02
+#define UPLOAD_PACKET_TYPE 0x01
+#define DOWNLOAD_PACKET_TYPE 0x02
 #define DATA_PACKET_TYPE 0xDD
 #define MOUNT_POINT "/sdcard"
 
-// p_download
-#define BUFFER_DOWNLOAD_FILE_SIZE 8192
-
 // p_upload
 #define BUFFER_UPLOAD_FILE_SIZE 8192
+
+// p_download
+#define BUFFER_DOWNLOAD_FILE_SIZE 8192
 
 // display.h
 #define DISPLAY_QUEUE_SIZE 10

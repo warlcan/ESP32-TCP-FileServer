@@ -8,6 +8,6 @@
 #include "string.h"
 #include <sys/socket.h>
 
-void start_download(int main_sock, char* file_name, uint32_t file_size);
+void start_download(int main_sock, char *file_name);
 
 #endif

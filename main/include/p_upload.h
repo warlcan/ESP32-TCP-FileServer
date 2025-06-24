@@ -8,6 +8,6 @@
 #include "string.h"
 #include <sys/socket.h>
 
-void start_upload(int main_sock, char *file_name);
+void start_upload(int main_sock, char* file_name, uint32_t file_size);
 
 #endif
