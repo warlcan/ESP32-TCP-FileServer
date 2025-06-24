@@ -41,7 +41,7 @@ void start_upload(int main_sock, char *file_name){
         char buffer[CHUNK_SIZE] = {0}; // resetting at each iteration
 
         buffer[0] = DATA_PACKET_TYPE;       
-        int bytes_read = fread(buffer + 1, 1, CHUNK_SIZE, file);
+        int bytes_read = fread(buffer + 1, 1, CHUNK_SIZE - 1, file);
         if (bytes_read <= 0) break;
         send(main_sock, buffer, CHUNK_SIZE, 0);
 

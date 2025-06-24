@@ -22,8 +22,11 @@ void sd_card_init(const char *_mount_point)
     };
 
     esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_cfg, SDSPI_DEFAULT_DMA);
-    if (ret != ESP_OK) return;
-
+    if (ret != ESP_OK) 
+    {
+        ESP_LOGE(TAG, "Error: spi bus: %d", ret);
+        return;
+    }
     host.max_freq_khz = 400;
 
     slot_config.gpio_cs = PIN_SPI_CS;
@@ -48,6 +51,6 @@ esp_err_t umount_sd()
     esp_err_t ret = esp_vfs_fat_sdcard_unmount(mount_point, card);
     if (ret == ESP_OK) ESP_LOGI(TAG, "Umount OK");
     else ESP_LOGE(TAG, "Error: 0x%X", ret);
-    spi_bus_free(SPI2_HOST);
+    //spi_bus_free(SPI2_HOST);
     return ret;
 }

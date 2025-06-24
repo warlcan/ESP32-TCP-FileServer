@@ -23,7 +23,7 @@ typedef enum {
     CONNECT_TYPE_ERROR = -1
 } ConnectType;
 
-// information connect
+// structure of service packet
 typedef struct {
     ConnectType connect_type;
     uint32_t file_size;
@@ -86,14 +86,16 @@ static void server_controller_task(void *pvParameters){
 
         // mount and show mount status
         if(mount_sd() != ESP_OK){
-            show_mnt_status(DFISPLAY_ERROR);
+            show_mnt_status(DISPLAY_ERROR);
             close(main_sock);
             continue;
         } else show_mnt_status(DISPLAY_YES);
 
-        // receive and processing service packet
+        // receive service packet
         recv(main_sock, buffer, CHUNK_SIZE, 0);
         ServicePacketStruct service_packet = parsing_service_packet(buffer);
+
+        // start download / upload
         switch (service_packet.connect_type){
         case CONNECT_TYPE_DOWNLOAD:
             start_download(main_sock, service_packet.file_name, service_packet.file_size);
@@ -106,7 +108,7 @@ static void server_controller_task(void *pvParameters){
             break;
         }
 
-        // end
+        // close connect
         close(main_sock);
         ESP_LOGI(TAG, "Connect close");
         show_cnt_status(DISPLAY_NO);

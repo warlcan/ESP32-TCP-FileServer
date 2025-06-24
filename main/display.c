@@ -1,9 +1,4 @@
 #include "include/display.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "esp_log.h"
-#include <string.h>
 
 static const char *TAG = "DISPLAY";
 static SSD1306_t dev;
@@ -31,7 +26,7 @@ static void display_controller_task(void *pvParameters) {
 }
 
 void display_init(void) {
-    i2c_master_init(&dev, CONFIG_SDA_GPIO, CONFIG_SCL_GPIO, CONFIG_RESET_GPIO);
+    i2c_master_init(&dev, PIN_SDA_GPIO, PIN_SCL_GPIO, PIN_RESET_GPIO);
     ssd1306_init(&dev, 128, 64);
     ssd1306_clear_screen(&dev, false);
     ssd1306_contrast(&dev, 0xff);
@@ -80,7 +75,7 @@ void show_mnt_status(int mnt_status){
     case DISPLAY_NO:
         send_display_command(1, MNT_STATUS_STR, "MNT: N");
         break;
-    case DFISPLAY_ERROR:
+    case DISPLAY_ERROR:
         send_display_command(1, MNT_STATUS_STR, "MNT: ERROR");
         break;
     default:
@@ -97,7 +92,7 @@ void show_cnt_status(int cnt_status){
     case DISPLAY_NO:
         send_display_command(1, CNT_STATUS_STR, "CNT: N");
         break;
-    case DFISPLAY_ERROR:
+    case DISPLAY_ERROR:
         send_display_command(1, CNT_STATUS_STR, "CNT: ERROR");
         break;
     default:

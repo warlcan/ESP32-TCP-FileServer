@@ -11,7 +11,7 @@ static FILE* open_file(char* file_name){
 
     FILE* file = fopen(path, "wb");
     if (file == NULL){
-        ESP_LOGE(TAG, "Error: File \"%s\" not found", path);
+        ESP_LOGE(TAG, "Error: File \"%s\" error", path);
         return NULL;
     }
     ESP_LOGI(TAG, "File open: %s", path);

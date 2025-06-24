@@ -2,6 +2,12 @@
 #define DISPLAY_H
 
 #include "config.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "esp_log.h"
+#include <string.h>
 #include "ssd1306.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -20,7 +26,7 @@ typedef enum {
 enum {
     DISPLAY_YES = 0,
     DISPLAY_NO = 1,
-    DFISPLAY_ERROR = 2
+    DISPLAY_ERROR = 2
 };
 
 void display_init(void);

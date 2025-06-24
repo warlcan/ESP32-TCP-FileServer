@@ -8,18 +8,16 @@
 // server controller (main)
 #define PORT 12035
 #define FILE_NAME_BUFFER_SIZE 20
-
 #define DOWNLOAD_PACKET_TYPE 0x01
 #define UPLOAD_PACKET_TYPE 0x02
 #define DATA_PACKET_TYPE 0xDD
-
 #define MOUNT_POINT "/sdcard"
+
 // p_download
 #define BUFFER_DOWNLOAD_FILE_SIZE 8192
 
 // p_upload
 #define BUFFER_UPLOAD_FILE_SIZE 8192
-
 
 // display.h
 #define DISPLAY_QUEUE_SIZE 10
@@ -29,6 +27,11 @@
 #define FILE_SIZE_STR 5
 #define PERCENT_STATUS_STR 6
 #define FILE_NAME_STR 7
+
+#define PIN_SDA_GPIO 21
+#define PIN_SCL_GPIO 22
+#define PIN_RESET_GPIO -1
+
 
 // sd_card.h
 #define PIN_SPI_MISO 19
