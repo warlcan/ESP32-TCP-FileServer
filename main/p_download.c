@@ -5,9 +5,7 @@ static const char *TAG = "P_Download";
 
 static FILE* open_file(char* file_name){
     char path[256] = {0};
-    strcat(path, MOUNT_POINT);
-    strcat(path, "/");
-    strcat(path, file_name);
+    snprintf(path, sizeof(path), "%s/%s", MOUNT_POINT, file_name);
 
     FILE* file = fopen(path, "wb");
     if (file == NULL){
@@ -23,14 +21,14 @@ void start_download(int main_sock, char *file_name, uint32_t file_size){
     FILE* file = open_file(file_name);
     if (file == NULL) return;
     size_t counter = 0;
-    size_t max_packets = (file_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
+    size_t max_packets = (file_size + (CHUNK_SIZE - 2)) / (CHUNK_SIZE - 1);
 
     show_progress_status(0);
 
     while(1){
         char buffer[CHUNK_SIZE] = {0}; // resetting at each iteration
 
-        uint8_t received_len = recv(main_sock, buffer, CHUNK_SIZE, 0);
+        int8_t received_len = recv(main_sock, buffer, CHUNK_SIZE, 0);
         if (received_len <= 0) break;
 
         if (counter % CALCULATING_PROGRESS_INTERVAL == 0){

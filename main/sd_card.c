@@ -34,7 +34,7 @@ void sd_card_init(const char *_mount_point)
 
     mount_config = (esp_vfs_fat_sdmmc_mount_config_t){
         .format_if_mount_failed = false,
-        .max_files = 1,
+        .max_files = 2,
         .allocation_unit_size = 16 * 1024};
 }
 

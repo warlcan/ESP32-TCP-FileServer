@@ -59,6 +59,10 @@ static ServicePacketStruct parsing_service_packet(char *buffer){
 static int open_listen_sock(int server_port){
     struct sockaddr_in server_addr;
     int listen_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if (listen_sock < 0) {
+        ESP_LOGE(TAG, "Error: Unable to create socket");
+        vTaskDelete(NULL);
+    }
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(server_port);
@@ -78,33 +82,46 @@ static void server_controller_task(void *pvParameters){
     while (1){
         char buffer[CHUNK_SIZE];
 
-        // accept connect and show information in display
+        // accept connect
         int main_sock = accept(listen_sock, (struct sockaddr *)&client_addr, &addr_len);
+        if (main_sock < 0) {
+            ESP_LOGE(TAG, "Error: Accept failed");
+            show_cnt_status(DISPLAY_ERROR);
+            continue;
+        }
         ESP_LOGI(TAG, "Connect");
-        // show_intro(false);
         show_cnt_status(DISPLAY_YES);
 
         // mount and show mount status
         if(mount_sd() != ESP_OK){
             show_mnt_status(DISPLAY_ERROR);
             close(main_sock);
-            continue;
+            close(listen_sock);
+            ESP_LOGE(TAG, "Restarting...");
+            esp_restart();
         } else show_mnt_status(DISPLAY_YES);
 
         // receive service packet
-        recv(main_sock, buffer, CHUNK_SIZE, 0);
+        if(recv(main_sock, buffer, CHUNK_SIZE, 0) <= 0){
+            ESP_LOGE(TAG, "Error: Recv failed, connect closed");
+            close(main_sock);
+            close(listen_sock);
+            umount_sd();
+            continue;
+        }
         ServicePacketStruct service_packet = parsing_service_packet(buffer);
-        show_file_size(service_packet.file_size);
-        show_file_name(service_packet.file_name);
         
         // start download / upload
         switch (service_packet.connect_type){
         case CONNECT_TYPE_DOWNLOAD:
             show_status_load(STATUS_DOWNLOAD);
+            show_file_size(service_packet.file_size);
+            show_file_name(service_packet.file_name);
             start_download(main_sock, service_packet.file_name, service_packet.file_size);
             break;
         case CONNECT_TYPE_UPLOAD:
             show_status_load(STATUS_UPLOAD);
+            show_file_name(service_packet.file_name);
             start_upload(main_sock, service_packet.file_name);
             break;
         default:

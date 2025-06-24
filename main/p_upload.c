@@ -5,9 +5,7 @@ static const char *TAG = "Upload";
 
 static FILE* open_file(char* file_name){
     char path[256] = {0};
-    strcat(path, MOUNT_POINT);
-    strcat(path, "/");
-    strcat(path, file_name);
+    snprintf(path, sizeof(path), "%s/%s", MOUNT_POINT, file_name);
 
     FILE* file = fopen(path, "rb");
     if (file == NULL){
@@ -31,7 +29,8 @@ void start_upload(int main_sock, char *file_name){
     if (file == NULL) return;
     size_t counter = 0;
     size_t file_size = find_file_size(file);
-    size_t max_packets = file_size / CHUNK_SIZE;
+    size_t max_packets = (file_size + (CHUNK_SIZE - 2)) / (CHUNK_SIZE - 1);
+
 
     show_file_size(file_size);
     show_file_name(file_name);

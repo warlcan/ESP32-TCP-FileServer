@@ -11,17 +11,17 @@ static void display_controller_task(void *pvParameters) {
         if (xQueueReceive(display_queue, &display_command, portMAX_DELAY)){
             switch (display_command.cmd) {
             case 1:
+                size_t data_str_len = strlen(display_command.data);
                 if (strlen(display_command.data) < 16){
-                    memcpy(display_command.data + strlen(display_command.data), ws_str, 16 - strlen(display_command.data));
+                    memcpy(display_command.data + data_str_len, ws_str, 16 - data_str_len);
                 }
-                ssd1306_display_text(&dev, display_command.y, display_command.data, strlen(display_command.data), false);
+                ssd1306_display_text(&dev, display_command.y, display_command.data, data_str_len, false);
                 break;
             default:
                 ESP_LOGE(TAG, "Error cmd");
                 break;
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 
@@ -32,7 +32,7 @@ void display_init(void) {
     ssd1306_contrast(&dev, 0xff);
 
     display_queue = xQueueCreate(DISPLAY_QUEUE_SIZE, sizeof(DisplayCommand));
-    xTaskCreate(display_controller_task, "DisplayController", 4096, NULL, 7, NULL);
+    xTaskCreate(display_controller_task, "DisplayController", 4096, NULL, 6, NULL);
 }
 
 void send_display_command(int cmd, int y, char *data){
@@ -109,10 +109,6 @@ void show_cnt_status(int cnt_status){
     }
 }
 
-void show_animation_loading(bool status_loading){
-    
-}
-
 void show_file_size(size_t file_size){
     char buf[16];
     sprintf(buf, "FILE: %zu B", file_size);
@@ -127,6 +123,6 @@ void show_progress_status(uint8_t progress){
 
 void show_file_name(char *file_name){
     char buf[16];
-    sprintf(buf, "NAME: %.9s", file_name);
+    snprintf(buf, sizeof(buf), "NAME: %.9s", file_name);
     send_display_command(1, FILE_NAME_STR, buf);
 }
