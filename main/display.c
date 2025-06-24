@@ -21,7 +21,7 @@ static void display_controller_task(void *pvParameters) {
                 break;
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 
@@ -67,6 +67,14 @@ void show_intro(bool is_clear_screen){
     show_file_name("-");
 }
 
+void show_status_load(StatusLoading status_loading){
+    if (status_loading == STATUS_DOWNLOAD){
+        send_display_command(1, LOADING_STATUS_STR, "SRVR -> CLNT");
+    } else {
+        send_display_command(1, LOADING_STATUS_STR, "SRVR <- CLNT");
+    }
+}
+
 void show_mnt_status(int mnt_status){
     switch (mnt_status) {
     case DISPLAY_YES:
@@ -79,7 +87,7 @@ void show_mnt_status(int mnt_status){
         send_display_command(1, MNT_STATUS_STR, "MNT: ERROR");
         break;
     default:
-        send_display_command(1, MNT_STATUS_STR, "MNT:");
+        send_display_command(1, MNT_STATUS_STR, "MNT: -");
         break;
     }
 }
@@ -96,7 +104,7 @@ void show_cnt_status(int cnt_status){
         send_display_command(1, CNT_STATUS_STR, "CNT: ERROR");
         break;
     default:
-        send_display_command(1, CNT_STATUS_STR, "CNT:");
+        send_display_command(1, CNT_STATUS_STR, "CNT: -");
         break;
     }
 }
@@ -119,6 +127,6 @@ void show_progress_status(uint8_t progress){
 
 void show_file_name(char *file_name){
     char buf[16];
-    sprintf(buf, "NAME: %s", file_name);
+    sprintf(buf, "NAME: %.9s", file_name);
     send_display_command(1, FILE_NAME_STR, buf);
 }

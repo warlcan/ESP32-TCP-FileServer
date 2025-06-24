@@ -32,6 +32,7 @@ enum {
 void display_init(void);
 void send_display_command(int cmd, int y, char *data);
 void show_intro(bool);
+void show_status_load(StatusLoading status_loading);
 void show_mnt_status(int mnt_status);
 void show_cnt_status(int cnt_status);
 void show_file_size(size_t file_size);

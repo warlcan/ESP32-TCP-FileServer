@@ -81,7 +81,7 @@ static void server_controller_task(void *pvParameters){
         // accept connect and show information in display
         int main_sock = accept(listen_sock, (struct sockaddr *)&client_addr, &addr_len);
         ESP_LOGI(TAG, "Connect");
-        show_intro(1);
+        // show_intro(false);
         show_cnt_status(DISPLAY_YES);
 
         // mount and show mount status
@@ -94,13 +94,17 @@ static void server_controller_task(void *pvParameters){
         // receive service packet
         recv(main_sock, buffer, CHUNK_SIZE, 0);
         ServicePacketStruct service_packet = parsing_service_packet(buffer);
-
+        show_file_size(service_packet.file_size);
+        show_file_name(service_packet.file_name);
+        
         // start download / upload
         switch (service_packet.connect_type){
         case CONNECT_TYPE_DOWNLOAD:
+            show_status_load(STATUS_DOWNLOAD);
             start_download(main_sock, service_packet.file_name, service_packet.file_size);
             break;
         case CONNECT_TYPE_UPLOAD:
+            show_status_load(STATUS_UPLOAD);
             start_upload(main_sock, service_packet.file_name);
             break;
         default:

@@ -7,7 +7,9 @@
 
 // server controller (main)
 #define PORT 12035
-#define FILE_NAME_BUFFER_SIZE 20
+// FAT limit (8 bytes for the name, 1 byte for the dot, 
+// and 3 bytes for the file extension) 
+#define FILE_NAME_BUFFER_SIZE 8 + 1 + 3
 #define DOWNLOAD_PACKET_TYPE 0x01
 #define UPLOAD_PACKET_TYPE 0x02
 #define DATA_PACKET_TYPE 0xDD
@@ -24,6 +26,7 @@
 
 #define CNT_STATUS_STR 2
 #define MNT_STATUS_STR 3
+#define LOADING_STATUS_STR 4
 #define FILE_SIZE_STR 5
 #define PERCENT_STATUS_STR 6
 #define FILE_NAME_STR 7
@@ -34,6 +37,8 @@
 
 
 // sd_card.h
+#define SD_CARD_MAX_FEQ_KHZ 6000
+
 #define PIN_SPI_MISO 19
 #define PIN_SPI_MOSI 23
 #define PIN_SPI_CLK 18

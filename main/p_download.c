@@ -23,10 +23,8 @@ void start_download(int main_sock, char *file_name, uint32_t file_size){
     FILE* file = open_file(file_name);
     if (file == NULL) return;
     size_t counter = 0;
-    size_t max_packets = file_size / CHUNK_SIZE;
+    size_t max_packets = (file_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
 
-    show_file_size(file_size);
-    show_file_name(file_name);
     show_progress_status(0);
 
     while(1){

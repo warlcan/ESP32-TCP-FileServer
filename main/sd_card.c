@@ -27,7 +27,7 @@ void sd_card_init(const char *_mount_point)
         ESP_LOGE(TAG, "Error: spi bus: %d", ret);
         return;
     }
-    host.max_freq_khz = 400;
+    host.max_freq_khz = SD_CARD_MAX_FEQ_KHZ;
 
     slot_config.gpio_cs = PIN_SPI_CS;
     slot_config.host_id = SPI2_HOST;
