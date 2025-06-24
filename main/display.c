@@ -65,44 +65,49 @@ void show_intro(bool is_clear_screen){
     };
     ssd1306_display_text(&dev, 0, "  Server up", 11, false); 
     ssd1306_bitmaps(&dev, 0, 0, circle, 8, 8, true);
+    show_mnt_status(-1);
+    show_cnt_status(-1);
+    show_file_size(0);
+    show_progress_status(0);
+    show_file_name("-");
 }
 
 void show_mnt_status(int mnt_status){
     switch (mnt_status) {
-    case 1:
+    case DISPLAY_YES:
         send_display_command(1, MNT_STATUS_STR, "MNT: Y");
         break;
-    case 2:
+    case DISPLAY_NO:
         send_display_command(1, MNT_STATUS_STR, "MNT: N");
         break;
-    case 3:
+    case DFISPLAY_ERROR:
         send_display_command(1, MNT_STATUS_STR, "MNT: ERROR");
         break;
     default:
-        send_display_command(1, MNT_STATUS_STR, "INT ERROR");
+        send_display_command(1, MNT_STATUS_STR, "MNT:");
         break;
     }
 }
 
 void show_cnt_status(int cnt_status){
     switch (cnt_status) {
-    case 1:
+    case DISPLAY_YES:
         send_display_command(1, CNT_STATUS_STR, "CNT: Y");
         break;
-    case 2:
+    case DISPLAY_NO:
         send_display_command(1, CNT_STATUS_STR, "CNT: N");
         break;
-    case 3:
+    case DFISPLAY_ERROR:
         send_display_command(1, CNT_STATUS_STR, "CNT: ERROR");
         break;
     default:
-        send_display_command(1, CNT_STATUS_STR, "INT ERROR");
+        send_display_command(1, CNT_STATUS_STR, "CNT:");
         break;
     }
 }
 
 void show_animation_loading(bool status_loading){
-
+    
 }
 
 void show_file_size(size_t file_size){
@@ -119,6 +124,6 @@ void show_progress_status(uint8_t progress){
 
 void show_file_name(char *file_name){
     char buf[16];
-    sprintf(buf, "NME: %s", file_name);
+    sprintf(buf, "NAME: %s", file_name);
     send_display_command(1, FILE_NAME_STR, buf);
 }

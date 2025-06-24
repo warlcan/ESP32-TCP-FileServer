@@ -17,15 +17,15 @@
 
 static const char *TAG = "Server";
 
-enum {
+typedef enum {
     CONNECT_TYPE_DOWNLOAD = 0,
     CONNECT_TYPE_UPLOAD = 1,
     CONNECT_TYPE_ERROR = -1
-};
+} ConnectType;
 
 // information connect
 typedef struct {
-    int8_t connect_type;
+    ConnectType connect_type;
     uint32_t file_size;
     char file_name[FILE_NAME_BUFFER_SIZE];
 } ServicePacketStruct;
@@ -82,14 +82,14 @@ static void server_controller_task(void *pvParameters){
         int main_sock = accept(listen_sock, (struct sockaddr *)&client_addr, &addr_len);
         ESP_LOGI(TAG, "Connect");
         show_intro(1);
-        show_cnt_status(1);
+        show_cnt_status(DISPLAY_YES);
 
         // mount and show mount status
         if(mount_sd() != ESP_OK){
-            show_mnt_status(3);
+            show_mnt_status(DFISPLAY_ERROR);
             close(main_sock);
             continue;
-        } else show_mnt_status(1);
+        } else show_mnt_status(DISPLAY_YES);
 
         // receive and processing service packet
         recv(main_sock, buffer, CHUNK_SIZE, 0);
@@ -109,9 +109,9 @@ static void server_controller_task(void *pvParameters){
         // end
         close(main_sock);
         ESP_LOGI(TAG, "Connect close");
-        show_cnt_status(2);
+        show_cnt_status(DISPLAY_NO);
         umount_sd();
-        show_mnt_status(2);
+        show_mnt_status(DISPLAY_NO);
     }
 }
 

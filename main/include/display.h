@@ -12,6 +12,17 @@ typedef struct {
     int y;
 } DisplayCommand;
 
+typedef enum {
+    STATUS_DOWNLOAD = 0,
+    STATUS_UPLOAD = 1
+} StatusLoading;
+
+enum {
+    DISPLAY_YES = 0,
+    DISPLAY_NO = 1,
+    DFISPLAY_ERROR = 2
+};
+
 void display_init(void);
 void send_display_command(int cmd, int y, char *data);
 void show_intro(bool);
